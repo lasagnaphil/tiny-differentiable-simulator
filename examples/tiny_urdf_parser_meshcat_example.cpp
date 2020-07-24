@@ -30,12 +30,15 @@ double abduction_angle = 0.2;
 int frameskip_gfx_sync =
     16;  // only sync every 10 frames (sim at 1000 Hz, gfx at ~60hz)
 
+    /*
 double initial_poses[] = {
     abduction_angle, 0., knee_angle, abduction_angle, 0., knee_angle,
     abduction_angle, 0., knee_angle, abduction_angle, 0., knee_angle,
 };
+*/
 
 int main(int argc, char* argv[]) {
+    std::vector<double> initial_poses(29, 0.0f);
   TinyWorld<double, DoubleUtils> world;
   TinyUrdfParser<double, DoubleUtils> parser;
 
@@ -62,7 +65,7 @@ int main(int argc, char* argv[]) {
 
   char search_path[TINY_MAX_EXE_PATH_LEN];
   std::string file_name;
-  TinyFileUtils::find_file("laikago/laikago_toes_zup.urdf", file_name);
+  TinyFileUtils::find_file("humanoid_torso.urdf", file_name);
   TinyFileUtils::extract_path(file_name.c_str(), search_path,
                               TINY_MAX_EXE_PATH_LEN);
 
@@ -80,9 +83,9 @@ int main(int argc, char* argv[]) {
   int flags = 0;
   parser.load_urdf_from_string(urdf_string, flags, logger, urdf_structures);
   // create graphics structures
-  std::string texture_path = "laikago_tex.jpg";
-  meshcat_viz.m_path_prefix = search_path;
-  meshcat_viz.convert_visuals(urdf_structures, texture_path);
+  // std::string texture_path = "laikago_tex.jpg";
+  // meshcat_viz.m_path_prefix = search_path;
+  // meshcat_viz.convert_visuals(urdf_structures, texture_path);
   bool floating_base = true;
   TinyMultiBody<double, DoubleUtils>& mb = *world.create_multi_body();
   mb.m_isFloating = true;
@@ -107,8 +110,8 @@ int main(int argc, char* argv[]) {
     mb.m_qd[2] = 0;
     mb.m_qd[3] = 0;
   }
-  if (mb.m_q.size() >= 12) {
-    for (int cc = 0; cc < 12; cc++) {
+  if (mb.m_q.size() >= initial_poses.size()) {
+    for (int cc = 0; cc < initial_poses.size(); cc++) {
       mb.m_q[start_index + cc] = initial_poses[cc];
     }
   }
@@ -126,7 +129,7 @@ int main(int argc, char* argv[]) {
     mb.forward_kinematics();
 
     // pd control
-    if (1) {
+    if (0) {
       // use PD controller to compute tau
       int qd_offset = mb.m_isFloating ? 6 : 0;
       int q_offset = mb.m_isFloating ? 7 : 0;
